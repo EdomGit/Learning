@@ -101,13 +101,46 @@ docker run -it --rm \
   balls-game
 ```
 
-**Для Windows (с X11 сервером, например, VcXsrv):**
-```bash
-docker run -it --rm \
-  -e DISPLAY=host.docker.internal:0.0 \
-  --name balls-game \
-  balls-game
-```
+**Для Windows (с X11 сервером VcXsrv):**
+
+1. **Установите и настройте VcXsrv:**
+   - Скачайте VcXsrv с [официального сайта](https://sourceforge.net/projects/vcxsrv/)
+   - Установите и запустите XLaunch
+   - Выберите "Multiple windows" или "One large window"
+   - На экране "Client startup" отметьте "Disable access control" (важно!)
+   - Завершите настройку
+
+2. **Узнайте IP адрес хоста Windows:**
+   ```powershell
+   # В PowerShell выполните:
+   ipconfig
+   # Найдите IPv4 адрес (например, 192.168.1.100)
+   ```
+
+3. **Запустите контейнер:**
+   ```bash
+   # Замените YOUR_IP_ADDRESS на ваш IP адрес из шага 2
+   docker run -it --rm \
+     -e DISPLAY=YOUR_IP_ADDRESS:0.0 \
+     --name balls-game \
+     balls-game
+   ```
+
+   **Или используйте host.docker.internal (для Docker Desktop):**
+   ```bash
+   docker run -it --rm \
+     -e DISPLAY=host.docker.internal:0.0 \
+     --name balls-game \
+     balls-game
+   ```
+
+   **Если не работает, попробуйте с IP адресом 127.0.0.1:**
+   ```bash
+   docker run -it --rm \
+     -e DISPLAY=127.0.0.1:0.0 \
+     --name balls-game \
+     balls-game
+   ```
 
 **Для macOS (с XQuartz):**
 ```bash
@@ -172,10 +205,33 @@ docker run -it --rm \
 
 ### Графическое окно не открывается в Docker
 
+**Для Windows:**
+1. Убедитесь, что VcXsrv запущен и работает
+2. Проверьте, что в настройках VcXsrv отмечено "Disable access control"
+3. Попробуйте использовать IP адрес вместо `host.docker.internal`:
+   ```powershell
+   # Узнайте IP адрес
+   ipconfig
+   # Затем запустите:
+   docker run -it --rm -e DISPLAY=ВАШ_IP:0.0 --name balls-game balls-game
+   ```
+4. Если используете WSL2, попробуйте:
+   ```bash
+   export DISPLAY=$(cat /etc/resolv.conf | grep nameserver | awk '{print $2}'):0.0
+   docker run -it --rm -e DISPLAY=$DISPLAY --name balls-game balls-game
+   ```
+5. Проверьте, что брандмауэр Windows не блокирует соединение
+
+**Для Linux:**
 1. Убедитесь, что X11 сервер запущен
 2. Проверьте, что переменная DISPLAY установлена корректно
-3. Для Linux: проверьте, что вы выполнили `xhost +local:docker`
-4. Для Windows/macOS: убедитесь, что X11 сервер (VcXsrv/XQuartz) запущен и настроен
+3. Выполните `xhost +local:docker` перед запуском контейнера
+4. Проверьте, что монтируется `/tmp/.X11-unix`
+
+**Для macOS:**
+1. Убедитесь, что XQuartz запущен
+2. Выполните `xhost + 127.0.0.1` в терминале
+3. Используйте `DISPLAY=host.docker.internal:0`
 
 ### Игра работает медленно
 
